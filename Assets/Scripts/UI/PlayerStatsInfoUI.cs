@@ -45,6 +45,7 @@ public class PlayerStatsInfoUI : MonoBehaviour
         playerManagerP1.FinishParryState += UpdateFinishParryState;
         playerManagerP1.GetHurtState += UpdateGetHurtState;
         playerManagerP1.HealthState += UpdateHealthState;
+        playerManagerP1.FinishAttackState += UpdateFinishAttackState;
     }
 
 
@@ -115,6 +116,10 @@ public class PlayerStatsInfoUI : MonoBehaviour
     private void UpdateHealthState(float health)
     {
         UpdateHealthUI(health);
+    }
+    private void UpdateFinishAttackState(bool value)
+    {
+        UpdateStatesColorUI(14, value);
     }
 
 }

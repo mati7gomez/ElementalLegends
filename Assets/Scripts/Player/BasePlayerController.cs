@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de los personajes del juego, algunas variables generales y metodos generales que comparten
 {
+    #region Variables
     private protected PlayerAnimatorController playerAnimatorController; //Script donde se manejan las animaciones de los personajes
     private protected PlayerManager playerManager; //Script donde se encuentran los estados (Stats) del personaje
 
@@ -13,7 +14,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     private protected float m_playerSpeed = 6f; //Velocidad del jugador (puede cambiar dependiendo el personaje)
     private protected float m_xMovement; //Valor para el input horizontal
     private protected float m_yMovement; //Valor para guardar la velocidad vertical actual
-    private protected bool m_movementPerformed; //Bool para controlar si el jugador se movio horizontalmente para que no se meta en bucle el cambio de animacion
+    private protected bool m_actionPerformed; //Bool para controlar si el jugador realizo alguna accion antes (parry, roll, atk)
 
     private protected BoxCollider2D m_groundCheckerBoxColl; //Box collider 2D para detectar si el jugador esta en el suelo
     private protected ContactFilter2D m_groundCheckerContactFilter; //Contact filter del GroundChecker, se establece su layermask a "Ground"
@@ -21,12 +22,26 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
 
     private protected float m_rollForce = 10f; //Fuerza del roll (puede cambiar dependiendo el personaje)
     private protected float m_rollCooldown = 1f; //Tiempo del cooldown para relizar un roll (puede cambiar dependiendo el personaje)
-    private protected bool m_canRoll = true;
+    private protected bool m_canRoll = true; //Bool para saber si puede hacer un roll
 
-    private protected float m_parryCooldown = 1f; //Tiempo del cooldown para relizar el parry (puede cambiar dependiendo el personaje)
-    private protected bool m_canParry = true;
+    private protected float m_parryCooldown = 2f; //Tiempo del cooldown para relizar el parry (puede cambiar dependiendo el personaje)
+    private protected bool m_canParry = true; //Bool para saber si puede hacer el parry
 
     private protected float m_hurtForce = 5f; //Fuerza con la que sera empujado el jugador al ser golpeado (puede cambiar dependiendo el personaje)
+
+    private protected bool m_canAirAttack = true; //Variable para saber si puede atacar en el aire (uno por vez que ataque en el aire)
+
+    private protected bool m_canAtk1 = true;
+    private protected float m_atk1Cooldown = 1.5f;
+
+    private protected bool m_canAtk2 = true;
+    private protected float m_atk2Cooldown = 2f;
+
+    private protected bool m_canAtk3 = true;
+    private protected float m_atk3Cooldown = 2f;
+
+    private protected bool m_canCombo;
+    private protected Byte m_comboNumber;
 
     private protected bool m_jumpPressed; //(Cross) Booleanos para saber que boton esta siendo apretado 
     private protected bool m_parryPressed1; //(L1)
@@ -37,8 +52,9 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     private protected bool m_rollPressed1; //(L2)
     private protected bool m_rollPressed2; //(R2)
 
+    #endregion
 
-    private protected virtual void Start()
+    private protected virtual void Start() //Start
     {
         playerAnimatorController = GetComponent<PlayerAnimatorController>(); //Obtenemos el componente PlayerAnimatorController
         playerManager = GetComponent<PlayerManager>(); //Obtenemos el componente PlayerManager
@@ -47,76 +63,109 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         SetGroundCheckerContactFilter(); //Establecemos la layer mask del ContactFilter del GroundChecker
     }
 
-    private protected virtual void Update()
+    private protected virtual void Update() //Update
     {
         ManagePressedInputs(true);
     }
 
-    private protected virtual void FixedUpdate()
+    private protected virtual void FixedUpdate() //FixedUpdate
     {
         PlayerJump();
         PlayerRoll();
         PlayerParry();
         PlayerHorizontalMovement();
         PlayerFlipSprite();
-
-        DetectPlayerGrounded();
+        PlayerGroundChecker();
         
         ManagePressedInputs(false);
     }
-
-    private void PlayerHorizontalMovement()
+    #region Horizontal movement
+    private void PlayerHorizontalMovement() //Manejamos el movimiento horizontal del jugador
     {
         m_xMovement = Input.GetAxis("L3xP" + playerManager.PlayerNumber); //Valor del input horizontal (Left Stick del joystick)
         
-        if (!playerManager.IsBusy)
+        if (!playerManager.IsBusy && !playerManager.IsFinishingAttack) //Si el jugador no esta realizando ninguna accion
         {
-            if (m_xMovement != 0)
+            if (m_xMovement != 0) //Si el movimiento del input es distinto de 0, nos estamos moviendo
             {
-                if (!m_movementPerformed)
+                if (!playerManager.IsMoving) //Si no nos estabamos moviendo
                 {
-                    playerManager.SetMoving(true);
-                    m_movementPerformed = true;
-                    PlayerHorizontalMovementAnimation("run");
+                    StartMovement();
                 }
-
-                m_xMovement = Mathf.Sign(m_xMovement) * Mathf.CeilToInt(Mathf.Abs(m_xMovement));
-                m_yMovement = m_rb.velocity.y;
-                m_rb.velocity = new Vector2(m_xMovement * m_playerSpeed, m_yMovement);
+                PlayerMove(2); //Se ejecutan los calculos de movimiento y el movimiento
             }
-            else
+            else //Si no estamos moviendo al jugador
             {
-                if (m_movementPerformed)
+                if (playerManager.IsMoving) //Si nos estabamos moviendo (esto se ejecuta al quedarnos quietos luego de correr)
                 {
-                    playerManager.SetMoving(false);
-                    m_movementPerformed = false;
-                    PlayerHorizontalMovementAnimation("idle");
+                    StopMovement(); //Metodo para detener al jugador al quedarnos quietos
                 }
-
-                m_yMovement = m_rb.velocity.y;
-                m_rb.velocity = new Vector2(0, m_yMovement);
+                else if (!playerManager.IsMoving && m_actionPerformed && !playerManager.IsFinishingParry && !playerManager.IsFinishingAttack) //Si no nos estamos moviendo e hicimos alguna accion y no estamos terminando el parry o el ataque
+                {
+                    StopMovement(); //Metodo para detener al jugador al quedarnos quietos
+                }
             }
         }
-        
-        
     }
-    private void PlayerHorizontalMovementAnimation(string animation)
+    private void SetHorizontalMovementAnimation(string animation) //Metodo para cambiar la animacion del movimiento en el suelo
     {
-        if (!playerManager.IsBusy && playerManager.IsGrounded && !playerManager.IsJumping)
+        if (playerManager.IsGrounded && !playerManager.IsJumping)
             playerAnimatorController.ChangeAnimationState(animation);
     }
-    private void PlayerFlipSprite()
+    private void CalculateDirectHorizontalMovement() //Calculo del movimiento del jugador sin suavizado
+    {
+        m_xMovement = Mathf.Sign(m_xMovement) * 1f; //Multiplicamos el signo del valor del input 1
+    }
+    private void CalculateSoftHorizontalMovement() //Calculo del movimiento del jugador con suavizado
+    {
+        m_xMovement = Mathf.Sign(m_xMovement) * Mathf.Clamp(Mathf.Abs(m_xMovement), 0.5f, 1f); //multiplicamos el signo del valor del input por Mathf.Clamp del valor absoluto del input, y establece 0.5 como valor minimo y 1 como maximo del float
+    }
+    private void HandleHorizontalMovementPhysics() //Fisicas del movimiento horizontal del jugador
+    {
+        m_yMovement = m_rb.velocity.y; //Velocidad actual de la velocidad en Y
+        m_rb.velocity = new Vector2(m_xMovement * m_playerSpeed, m_yMovement); //Nueva velocidad del rigidbody. xInput * playerSpeed
+    }
+    private void PlayerMove(Byte movementMode) //Metodo para ejecutar los calculos de movimiento y el movimiento
+    {
+        if (movementMode == 1)
+        {
+            //Movimiento sin suavizado
+            CalculateDirectHorizontalMovement(); //Calculamos el valor del input para movernos directamente
+        }
+        else if (movementMode == 2)
+        {
+            //Movimiento con suavizado
+            CalculateSoftHorizontalMovement(); //Calculamos el valor del input para movernos con suavizado
+        }
+        HandleHorizontalMovementPhysics(); //Manejamos las fisicas del movimiento horizontal del jugador
+    }
+    private void StartMovement() //Metodo para comenzar a movernos
+    {
+        playerManager.SetMoving(true); //Establecemos el estado moviendose del jugador
+        SetHorizontalMovementAnimation("run"); //Establecemos la animacion del personaje a "run"
+    }
+    private void StopMovement() //Metodo para detener al jugador al quedarnos quietos
+    {
+        PlayerSetActionPerformed(false); //Establecemos que no se realizo ninguna accion anteriormente
+        playerManager.SetMoving(false); //Establecemos el estado de movimiento del jugador
+        SetHorizontalMovementAnimation("idle"); //Establecemos la animacion del personaje a "idle"
+        HandleHorizontalMovementPhysics(); //Manejamos las fisicas del movimiento horizontal del jugador
+    }
+    #endregion
+
+    #region Flip
+    private void PlayerFlipSprite() //Rotamos el sprite del jugador al cambiar de direccion
     {
         if(!playerManager.IsFlipped && m_rb.velocity.x < 0 && !playerManager.IsBusy)
         {
-            PlayerFlip("left");
+            FlipSprite("left");
         }
         else if (playerManager.IsFlipped && m_rb.velocity.x > 0 && !playerManager.IsBusy)
         {
-            PlayerFlip("right");
+            FlipSprite("right");
         }
     }
-    private void PlayerFlip(string side)
+    private void FlipSprite(string side) //Metodo para rotar el sprite
     {
         if (side == "left")
         {
@@ -131,23 +180,31 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             transform.localScale = new Vector2(Mathf.Abs(transform.localScale.x), transform.localScale.y);
         }
     }
+    #endregion
+
+    #region Jump
     private void PlayerJump()
     {
         if (m_jumpPressed && playerManager.IsGrounded && !playerManager.IsBusy)
         {
-            playerManager.SetJumping(true);
-            playerManager.SetLanding(false);
+            SetJumpAnimation(); //Establecemos la animacion de salto y los estados
             m_xMovement = m_rb.velocity.x;
             m_rb.velocity = new Vector2(m_xMovement, m_jumpForce);
-            PlayerJumpAnimation();
-            m_groundCheckerBoxColl.enabled = false;
-            Invoke("ActivateGroundChecker", 0.1f);
+            
+            //m_groundCheckerBoxColl.enabled = false; //Desactivamos el groundChecker momentaneamente para q no se nos buguee
+            //Invoke("ActivateGroundChecker", 0.1f); //Activamos el ground checker nuevamente
         }
     }
-    private void PlayerJumpAnimation()
+    private void SetJumpAnimation() //Establecemos la animacion de salto y los estados
     {
         playerAnimatorController.ChangeAnimationState("jump_up");
+        playerManager.SetJumping(true);
+        playerManager.SetLanding(false);
+        playerManager.SetGrounded(false);
     }
+    #endregion
+
+    #region GroundChecker
     private void SetGroundCheckerContactFilter()
     {
         m_groundCheckerContactFilter.SetLayerMask(LayerMask.GetMask("Ground")); 
@@ -156,48 +213,52 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     {
         m_groundCheckerBoxColl.enabled = true;
     }
-    private void DetectPlayerGrounded()
+    private void PlayerGroundChecker() //metodo para controlar el estado del jugador sobre el suelo
     {
-        if (Physics2D.OverlapCollider(m_groundCheckerBoxColl, m_groundCheckerContactFilter, new Collider2D[1]) > 0)
+        if (Physics2D.OverlapCollider(m_groundCheckerBoxColl, m_groundCheckerContactFilter, new Collider2D[1]) > 0) //Si hay mas de un objeto con layerMask "Ground" colisionando con el groundCheckerBoxCollider es porque estamos en el suelo
         {
-            playerManager.SetGrounded(true);
-            playerManager.SetJumping(false);
-            if (!playerManager.IsBusy)
+            if (!playerManager.IsBusy) //Si no estamos realizando ninguna accion (ataque, parry, roll. No incluye movimiento horizontal o salto)
             {
-                if (playerManager.IsMoving)
+                if (playerManager.IsMoving && !playerManager.IsGrounded) //Si nos estamos moviendo y caemos en el suelo (cambio de animacion a correr al caer)
                 {
-                    playerAnimatorController.ChangeAnimationState("run");
-                    Debug.Log("Bucle2");
+                    PlayerOnLand("run"); //Metodo para cuando aterricemos en el suelo
                 }
-                else
+                else if (!playerManager.IsMoving && !playerManager.IsGrounded) //Si no nos estamos moviendo y caemos al suelo (cambio de animacion a idle al caer)
                 {
-                    if (!playerManager.IsFinishingParry)
-                    {
-                        playerAnimatorController.ChangeAnimationState("idle");
-                        Debug.Log("Bucle3");
-                    }
-                    
-                }       
+                    PlayerOnLand("idle"); //Metodo para cuando aterricemos en el suelo
+                }     
             }
         }
-        else
+        else //Si el groundChecker no esta en el suelo
         {
-            playerManager.SetGrounded(false);
-            if (!playerManager.IsBusy && !playerManager.IsGrounded && !playerManager.IsJumping)
+            if (playerManager.IsGrounded) //Si estamos en el suelo
+                playerManager.SetGrounded(false); //cambiamos la variable ya que dejamos de estar en el suelo
+            else //Si no estamos en el suelo
             {
-                Debug.Log("Bucle1");
-                PlayerJumpAnimation();
-            }   
-        }
-            
+                if (!playerManager.IsBusy && !playerManager.IsJumping) //Si el jugador no esta realizando ninguna accion y sale del suelo y no esta saltando (cambio de animacion al caer del suelo)
+                {
+                    SetJumpAnimation();
+                    playerManager.SetJumping(true);
+                }
+            }
+        }  
     }
+    private void PlayerOnLand(string animation) //Metodo para cuando aterricemos en el suelo
+    {
+        playerManager.SetJumping(false); //Establecemos la variable isJumping en falsa, ya no estamos saltando
+        playerManager.SetGrounded(true); //Establecemos la variable isGrounded en verdadera, estamos en el suelo
+        m_canAirAttack = true;
+        SetHorizontalMovementAnimation(animation); //Metodo para cambiar la animacion del movimiento en el suelo
+        
+    }
+    #endregion
+
+    #region Roll
     private void PlayerRoll()
     {
         if ((m_rollPressed1 || m_rollPressed2) && !playerManager.IsBusy && m_canRoll)
         {
-            PlayerRollAnimation();
-            playerManager.SetBusy(true);
-            playerManager.SetRolling(true);
+            PlayerRollAnimation(); //Cambiamos la animacion de roll y sus estados
 
             m_canRoll = false;
             Invoke("PlayerRollCooldown", m_rollCooldown);
@@ -207,56 +268,67 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             if (m_rollPressed1)
             {
                 rollDir = new Vector2(-m_rollForce, 0f);
-                PlayerFlip("left");
+                FlipSprite("left");
             }
             else if (m_rollPressed2)
             {
                 rollDir = new Vector2(m_rollForce, 0f);
-                PlayerFlip("right");
+                FlipSprite("right");
             }
             
-
             m_rb.AddForce(rollDir, ForceMode2D.Impulse);
         }
     }
-    private void PlayerRollAnimation()
+    private void PlayerRollAnimation() //Cambiamos la animacion de roll y sus estados
     {
         playerAnimatorController.ChangeAnimationState("roll");
+        playerManager.SetBusy(true); 
+        playerManager.SetRolling(true);
+        PlayerSetActionPerformed(true);
     }
     private void PlayerRollCooldown()
     {
         m_canRoll = true;
     }
+    #endregion
+
+    #region Parry
     private void PlayerParry()
     {
         if ((m_parryPressed1 || m_parryPressed2) && !playerManager.IsBusy && playerManager.IsGrounded && m_canParry)
         {
-            PlayerParryAnimation();
-            playerManager.SetBusy(true);
-            playerManager.SetParrying(true);
-
+            Debug.Log("parry");
+            Debug.Log(playerAnimatorController.m_currentAnimation);
+            PlayerParryAnimation(); //Cambiamos a la animacion del parry y sus estados
+            
             m_canParry = false;
             Invoke("PlayerParryCooldown", m_parryCooldown);
 
             m_rb.velocity = Vector2.zero;
-
             if (m_parryPressed1) 
-                PlayerFlip("left");
+                FlipSprite("left");
             else if (m_parryPressed2)
-                PlayerFlip("right");
+                FlipSprite("right");
         }
     }
-    private void PlayerParryAnimation()
+    private void PlayerParryAnimation() //Cambiamos a la animacion del parry y sus estados
     {
         playerAnimatorController.ChangeAnimationState("parry");
-        //playerAnimatorController.SetAnimationState("holisxddxd"); //Esto se puede solucionar mediante un cooldown en el parry
+        playerManager.SetBusy(true);
+        playerManager.SetParrying(true);
+        PlayerSetActionPerformed(true);
     }
     private void PlayerParryCooldown()
     {
         m_canParry = true;
     }
+
+    #endregion
+
+    #region Damage and death
     public void ReceiveDamage(Transform enemyTransform, float damage)
     {
+        PlayerSetActionPerformed(true);
         float distance = transform.position.x - enemyTransform.position.x;
         sbyte i = 0;
         bool receiveDamage = false;
@@ -284,12 +356,10 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             }
             else
             {
-                PlayerHurtAnimation();
-                playerManager.SetGettingHurt(true);
-                playerManager.SetBusy(true);
+                PlayerHurtAnimation(); //Establecemos la animacion de daño y los estados
 
-                if (i == 1) PlayerFlip("left");
-                else if (i == -1) PlayerFlip("right");
+                if (i == 1) FlipSprite("left");
+                else if (i == -1) FlipSprite("right");
 
                 m_rb.velocity = Vector2.zero;
                 Vector2 moveDir = new Vector2(m_hurtForce * i, 0f);
@@ -297,10 +367,12 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             }
         }
     }
-    private void PlayerHurtAnimation()
+    private void PlayerHurtAnimation() //Establecemos la animacion de daño y los estados
     {
         playerAnimatorController.ChangeAnimationState("hurt");
         playerAnimatorController.SetAnimationState("");
+        playerManager.SetGettingHurt(true);
+        playerManager.SetBusy(true);
     }
     private void PlayerDeath()
     {
@@ -312,14 +384,38 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         playerAnimatorController.ChangeAnimationState("death");
         this.enabled = false;
     }
-    
-    
 
+    #endregion
 
+    private protected void PlayerSetActionPerformed(bool value)
+    {
+        playerManager.SetMoving(false); //Establecemos q nos dejamos de mover
+        m_actionPerformed = value; //Establecemos el booleano de accion realizada, esto para no estar seteando todo el tiempo el estado o la animacion
+    }
+    private protected void BaseFixedUpdate() //Ejecutar al final del fixed update de cada personaje
+    {
+        PlayerJump();
+        PlayerRoll();
+        PlayerParry();
+        PlayerHorizontalMovement();
+        PlayerFlipSprite();
+        PlayerGroundChecker();
 
-
-
-
+        ManagePressedInputs(false);
+    }
+    public void SetRigidBodyDynamic()
+    {
+        m_rb.isKinematic = false;
+    }
+    public void DisableCombo()
+    {
+        if (!playerManager.IsAttacking)
+        {
+            m_canCombo = false;
+            m_comboNumber = 0;
+        }
+        
+    }
 
 
 
@@ -367,6 +463,9 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
                 break;
             case "gettinghurt":
                 playerManager.SetGettingHurt(value);
+                break;
+            case "finishingattack":
+                playerManager.SetFinishingAttack(value);
                 break;
 
         }
