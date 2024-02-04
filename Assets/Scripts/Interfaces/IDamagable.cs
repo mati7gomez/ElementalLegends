@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IDamagable
 {
-    void ReceiveDamage(Transform enemyTransform, float damage); //Recibimos el transform enemigo para poder calcular en que direccion sera golpeado y lanzado el jugador
+    void ReceiveDamage(Transform enemyTransform, float damage, float energy, float force); //Recibimos el transform enemigo para poder calcular en que direccion sera golpeado y lanzado el jugador
 }

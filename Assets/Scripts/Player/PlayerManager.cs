@@ -22,6 +22,7 @@ public class PlayerManager : MonoBehaviour
     private bool isGettingHurt;
     private float health = 100f;
     private bool isFinishingAttack;
+    private float energy;
 
     public bool IsGrounded => isGrounded;
     public bool IsAttacking => isAttacking;
@@ -37,6 +38,7 @@ public class PlayerManager : MonoBehaviour
     public bool IsGettingHurt => isGettingHurt;
     public float Health => health;
     public bool IsFinishingAttack => isFinishingAttack;
+    public float Energy => energy;
 
 
     //public void SetGrounded(bool value) => isGrounded = value;
@@ -118,7 +120,12 @@ public class PlayerManager : MonoBehaviour
     public void SetFinishingAttack(bool value)
     {
         isFinishingAttack = value;
-        FinishAttackState?.Invoke(value);
+        FinishAttackState?.Invoke(isFinishingAttack);
+    }
+    public void SetEnergy(float value)
+    {
+        energy = value;
+        EnergyState?.Invoke(energy);
     }
 
     public event Action<bool> GroundedState;
@@ -135,5 +142,6 @@ public class PlayerManager : MonoBehaviour
     public event Action<bool> GetHurtState;
     public event Action<float> HealthState;
     public event Action<bool> FinishAttackState;
+    public event Action<float> EnergyState;
 
 }

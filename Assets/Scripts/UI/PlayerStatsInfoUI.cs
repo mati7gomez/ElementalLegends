@@ -46,6 +46,7 @@ public class PlayerStatsInfoUI : MonoBehaviour
         playerManagerP1.GetHurtState += UpdateGetHurtState;
         playerManagerP1.HealthState += UpdateHealthState;
         playerManagerP1.FinishAttackState += UpdateFinishAttackState;
+        playerManagerP1.EnergyState += UpdateEnergyState;
     }
 
 
@@ -61,6 +62,10 @@ public class PlayerStatsInfoUI : MonoBehaviour
     private void UpdateHealthUI(float health)
     {
         m_texts[13].text = "Health: " + health.ToString();
+    }
+    private void UpdateEnergyUI(float energy)
+    {
+        m_texts[15].text = "Energy: " + energy.ToString();
     }
 
     //--------------------------------------------------------//
@@ -120,6 +125,10 @@ public class PlayerStatsInfoUI : MonoBehaviour
     private void UpdateFinishAttackState(bool value)
     {
         UpdateStatesColorUI(14, value);
+    }
+    private void UpdateEnergyState(float energy) // 15
+    {
+        UpdateEnergyUI(energy);
     }
 
 }

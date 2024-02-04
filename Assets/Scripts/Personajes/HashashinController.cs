@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ public class HashashinController : BasePlayerController
         Atk1();
         Atk2();
         Atk3();
+        UltimateAtk();
     }
     private void AirAttack()
     {
@@ -104,4 +106,28 @@ public class HashashinController : BasePlayerController
     {
         m_canAtk3 = true;
     }
+    private void UltimateAtk()
+    {
+        if (m_attack3Pressed && !playerManager.IsBusy && playerManager.Energy >= 120f)
+        {
+            AtkAnimationAndState("ultimate");
+            playerManager.SetJumping(false);
+            m_rb.velocity = Vector2.zero;
+            m_rb.isKinematic = true;
+            DisableCombo();
+            ResetEnergy();
+        }
+    }
+    private void UltimateTeleport()
+    {
+        AttackCollidersHashashin ultimate = transform.Find("Ultimate").GetComponent<AttackCollidersHashashin>();
+        if (ultimate.GetCanUltimatePlayer())
+        {
+            Transform enemyPos = ultimate.GetTarget();
+            Debug.Log("Me muevo al enemigo nache");
+            transform.position = enemyPos.position;
+            ultimate.ResetTarget();
+        }
+    }
+
 }

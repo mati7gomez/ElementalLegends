@@ -326,8 +326,8 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     #endregion
 
     #region Damage and death
-    public void ReceiveDamage(Transform enemyTransform, float damage)
-    {
+    public void ReceiveDamage(Transform enemyTransform, float damage, float energy, float force)
+    {   
         PlayerSetActionPerformed(true);
         float distance = transform.position.x - enemyTransform.position.x;
         sbyte i = 0;
@@ -347,7 +347,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
 
         if (!playerManager.IsRolling && receiveDamage)
         {
-            
+            AddEnergy(energy);
             playerManager.SetHealth(playerManager.Health - damage);
             if (playerManager.Health <= 0)
             {
@@ -362,7 +362,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
                 else if (i == -1) FlipSprite("right");
 
                 m_rb.velocity = Vector2.zero;
-                Vector2 moveDir = new Vector2(m_hurtForce * i, 0f);
+                Vector2 moveDir = new Vector2(force * i, 0f);
                 m_rb.AddForce(moveDir, ForceMode2D.Impulse);
             }
         }
@@ -415,6 +415,14 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             m_comboNumber = 0;
         }
         
+    }
+    public void ResetEnergy() 
+    {
+        playerManager.SetEnergy(0);
+    }
+    public void AddEnergy(float energyToAdd)
+    {
+        playerManager.SetEnergy(playerManager.Energy + energyToAdd);
     }
 
 
@@ -475,14 +483,14 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     {
         if (entry)
         {
-            if (Input.GetButton("CrossP" + playerManager.PlayerNumber)) m_jumpPressed = true;
-            if (Input.GetButton("L1P" + playerManager.PlayerNumber)) m_parryPressed1 = true;
-            if (Input.GetButton("R1P" + playerManager.PlayerNumber)) m_parryPressed2 = true;
-            if (Input.GetButton("SquareP" + playerManager.PlayerNumber)) m_attack1Pressed = true;
-            if (Input.GetButton("CircleP" + playerManager.PlayerNumber)) m_attack2Pressed = true;
-            if (Input.GetButton("TriangleP" + playerManager.PlayerNumber)) m_attack3Pressed = true;
-            if (Input.GetButton("L2P" + playerManager.PlayerNumber)) m_rollPressed1 = true;
-            if (Input.GetButton("R2P" + playerManager.PlayerNumber)) m_rollPressed2 = true;
+            if (Input.GetButtonDown("CrossP" + playerManager.PlayerNumber)) m_jumpPressed = true;
+            if (Input.GetButtonDown("L1P" + playerManager.PlayerNumber)) m_parryPressed1 = true;
+            if (Input.GetButtonDown("R1P" + playerManager.PlayerNumber)) m_parryPressed2 = true;
+            if (Input.GetButtonDown("SquareP" + playerManager.PlayerNumber)) m_attack1Pressed = true;
+            if (Input.GetButtonDown("CircleP" + playerManager.PlayerNumber)) m_attack2Pressed = true;
+            if (Input.GetButtonDown("TriangleP" + playerManager.PlayerNumber)) m_attack3Pressed = true;
+            if (Input.GetButtonDown("L2P" + playerManager.PlayerNumber)) m_rollPressed1 = true;
+            if (Input.GetButtonDown("R2P" + playerManager.PlayerNumber)) m_rollPressed2 = true;
 
 
         }
