@@ -14,7 +14,6 @@ public class HashashinController : BasePlayerController
     private protected override void Update()
     {
         base.Update();
-        Debug.Log("puedo salta");
     }
     private protected override void FixedUpdate()
     {

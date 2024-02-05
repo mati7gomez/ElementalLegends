@@ -326,7 +326,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     #endregion
 
     #region Damage and death
-    public void ReceiveDamage(Transform enemyTransform, float damage, float energy, float force)
+    public void ReceiveDamage(Transform enemyTransform, float damage, float energy, float forceX, float forceY)
     {   
         PlayerSetActionPerformed(true);
         float distance = transform.position.x - enemyTransform.position.x;
@@ -362,7 +362,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
                 else if (i == -1) FlipSprite("right");
 
                 m_rb.velocity = Vector2.zero;
-                Vector2 moveDir = new Vector2(force * i, 0f);
+                Vector2 moveDir = new Vector2(forceX * i, forceY);
                 m_rb.AddForce(moveDir, ForceMode2D.Impulse);
             }
         }

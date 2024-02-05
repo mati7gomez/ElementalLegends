@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AttackCollidersHashashin : MonoBehaviour
+public class AttackCollidersMauler : MonoBehaviour
 {
     [SerializeField] private Byte m_atkNumber;
     private int m_damage;
@@ -20,12 +20,12 @@ public class AttackCollidersHashashin : MonoBehaviour
                 m_hitForce = 4;
                 break;
             case 1:
-                m_damage = 5;
+                m_damage = 10;
                 m_hitForce = 0;
                 break;
             case 2:
                 m_damage = 10;
-                m_hitForce = 1;
+                m_hitForce = 7;
                 break;
             case 3:
                 m_damage = 15;
@@ -33,7 +33,7 @@ public class AttackCollidersHashashin : MonoBehaviour
                 break;
             case 4:
                 m_damage = 10;
-                m_hitForce = 0;
+                m_hitForce = 20;
                 break;
         }
     }
@@ -61,7 +61,7 @@ public class AttackCollidersHashashin : MonoBehaviour
                         HandleAttack(collision, m_hitForce, 0);
                         break;
                 }
-            }  
+            }
             else
             {
                 m_target = collision.transform;
@@ -72,10 +72,11 @@ public class AttackCollidersHashashin : MonoBehaviour
                 }
                 else
                 {
-                    collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage * 1.5f, m_hitForce, m_hitForce);
+                    collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage * 1.5f, m_hitForce, 20);
                     ResetUltimateCheck();
-                }
                     
+                }
+                ResetTarget();
             }
         }
     }
@@ -87,15 +88,7 @@ public class AttackCollidersHashashin : MonoBehaviour
     {
         m_ultimateCheck = false;
     }
-    public bool GetCanUltimatePlayer()
-    {
-        return m_ultimateCheck;
-    }
-    public Transform GetTarget()
-    {
-        return m_target;
-    }
-    public void ResetTarget()
+    private void ResetTarget()
     {
         m_target = null;
     }

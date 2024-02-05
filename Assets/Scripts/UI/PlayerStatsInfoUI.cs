@@ -8,18 +8,27 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class PlayerStatsInfoUI : MonoBehaviour
 {
-    private PlayerManager playerManagerP1;
+    private PlayerManager playerManager;
 
     [SerializeField] private Color m_colorRed;
     [SerializeField] private Color m_colorGreen;
+    [SerializeField] private Byte m_player;
 
     private TextMeshProUGUI[] m_texts;
 
     private void Start()
     {
-        playerManagerP1 = GameObject.Find("Hashashin").GetComponent<PlayerManager>();
+        if (m_player == 1)
+        {
+            playerManager = GameObject.Find("Hashashin").GetComponent<PlayerManager>();
+        }
+        else if (m_player == 2)
+        {
+            playerManager = GameObject.Find("Mauler").GetComponent<PlayerManager>();
+        }
+        
         SetTextsObjects();
-        SetP1EventsSuscription();
+        SetPlayerEventsSuscription();
     }
     private void SetTextsObjects()
     {
@@ -29,24 +38,24 @@ public class PlayerStatsInfoUI : MonoBehaviour
             m_texts[i] = transform.GetChild(i).GetComponent<TextMeshProUGUI>();
         }
     }
-    private void SetP1EventsSuscription()
+    private void SetPlayerEventsSuscription()
     {
         // Suscribir los métodos de P1 a los eventos correspondientes
-        playerManagerP1.GroundedState += UpdateGroundedState;
-        playerManagerP1.AttackState += UpdateAttackState;
-        playerManagerP1.JumpState += UpdateJumpState;
-        playerManagerP1.ParryState += UpdateParryState;
-        playerManagerP1.DieState += UpdateDieState;
-        playerManagerP1.MoveState += UpdateMoveState;
-        playerManagerP1.RollState += UpdateRollState;
-        playerManagerP1.BusyState += UpdateBusyState;
-        playerManagerP1.FlipState += UpdateFlipState;
-        playerManagerP1.LandState += UpdateLandState;
-        playerManagerP1.FinishParryState += UpdateFinishParryState;
-        playerManagerP1.GetHurtState += UpdateGetHurtState;
-        playerManagerP1.HealthState += UpdateHealthState;
-        playerManagerP1.FinishAttackState += UpdateFinishAttackState;
-        playerManagerP1.EnergyState += UpdateEnergyState;
+        playerManager.GroundedState += UpdateGroundedState;
+        playerManager.AttackState += UpdateAttackState;
+        playerManager.JumpState += UpdateJumpState;
+        playerManager.ParryState += UpdateParryState;
+        playerManager.DieState += UpdateDieState;
+        playerManager.MoveState += UpdateMoveState;
+        playerManager.RollState += UpdateRollState;
+        playerManager.BusyState += UpdateBusyState;
+        playerManager.FlipState += UpdateFlipState;
+        playerManager.LandState += UpdateLandState;
+        playerManager.FinishParryState += UpdateFinishParryState;
+        playerManager.GetHurtState += UpdateGetHurtState;
+        playerManager.HealthState += UpdateHealthState;
+        playerManager.FinishAttackState += UpdateFinishAttackState;
+        playerManager.EnergyState += UpdateEnergyState;
     }
 
 
