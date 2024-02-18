@@ -90,9 +90,9 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             {
                 if (!playerManager.IsMoving) //Si no nos estabamos moviendo
                 {
-                    StartMovement();
+                    StartMovementState();
                 }
-                PlayerMove(2); //Se ejecutan los calculos de movimiento y el movimiento
+                PlayerMoveMode(2); //Se ejecutan los calculos de movimiento y el movimiento
             }
             else //Si no estamos moviendo al jugador
             {
@@ -125,7 +125,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         m_yMovement = m_rb.velocity.y; //Velocidad actual de la velocidad en Y
         m_rb.velocity = new Vector2(m_xMovement * m_playerSpeed, m_yMovement); //Nueva velocidad del rigidbody. xInput * playerSpeed
     }
-    private void PlayerMove(Byte movementMode) //Metodo para ejecutar los calculos de movimiento y el movimiento
+    private void PlayerMoveMode(Byte movementMode) //Metodo para ejecutar los calculos de movimiento y el movimiento
     {
         if (movementMode == 1)
         {
@@ -139,7 +139,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         }
         HandleHorizontalMovementPhysics(); //Manejamos las fisicas del movimiento horizontal del jugador
     }
-    private void StartMovement() //Metodo para comenzar a movernos
+    private void StartMovementState() //Metodo para comenzar a movernos
     {
         playerManager.SetMoving(true); //Establecemos el estado moviendose del jugador
         SetHorizontalMovementAnimation("run"); //Establecemos la animacion del personaje a "run"
@@ -258,7 +258,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     {
         if ((m_rollPressed1 || m_rollPressed2) && !playerManager.IsBusy && m_canRoll)
         {
-            PlayerRollAnimation(); //Cambiamos la animacion de roll y sus estados
+            PlayerRollAnimationAndState(); //Cambiamos la animacion de roll y sus estados
 
             m_canRoll = false;
             Invoke("PlayerRollCooldown", m_rollCooldown);
@@ -279,7 +279,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             m_rb.AddForce(rollDir, ForceMode2D.Impulse);
         }
     }
-    private void PlayerRollAnimation() //Cambiamos la animacion de roll y sus estados
+    private void PlayerRollAnimationAndState() //Cambiamos la animacion de roll y sus estados
     {
         playerAnimatorController.ChangeAnimationState("roll");
         playerManager.SetBusy(true); 
@@ -299,7 +299,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         {
             Debug.Log("parry");
             Debug.Log(playerAnimatorController.m_currentAnimation);
-            PlayerParryAnimation(); //Cambiamos a la animacion del parry y sus estados
+            PlayerParryAnimationAndState(); //Cambiamos a la animacion del parry y sus estados
             
             m_canParry = false;
             Invoke("PlayerParryCooldown", m_parryCooldown);
@@ -311,7 +311,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
                 FlipSprite("right");
         }
     }
-    private void PlayerParryAnimation() //Cambiamos a la animacion del parry y sus estados
+    private void PlayerParryAnimationAndState() //Cambiamos a la animacion del parry y sus estados
     {
         playerAnimatorController.ChangeAnimationState("parry");
         playerManager.SetBusy(true);
@@ -356,7 +356,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             }
             else
             {
-                PlayerHurtAnimation(); //Establecemos la animacion de daño y los estados
+                PlayerHurtAnimationAndState(); //Establecemos la animacion de daño y los estados
 
                 if (i == 1) FlipSprite("left");
                 else if (i == -1) FlipSprite("right");
@@ -367,10 +367,10 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
             }
         }
     }
-    private void PlayerHurtAnimation() //Establecemos la animacion de daño y los estados
+    private void PlayerHurtAnimationAndState() //Establecemos la animacion de daño y los estados
     {
         playerAnimatorController.ChangeAnimationState("hurt");
-        playerAnimatorController.SetAnimationState("");
+        playerAnimatorController.SetAnimationState(""); // Esto es para q si nos golpean el estar siendo golpeados nos vuelva a poner la animacion de daño
         playerManager.SetGettingHurt(true);
         playerManager.SetBusy(true);
     }
@@ -382,7 +382,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     private void PlayerDeathAnimation()
     {
         playerAnimatorController.ChangeAnimationState("death");
-        this.enabled = false;
+        this.enabled = false; //Desactivamos este script para q ya no nos puedan hacer nada mientras morimos
     }
 
     #endregion
@@ -416,11 +416,11 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
         }
         
     }
-    public void ResetEnergy() 
+    private protected void ResetEnergy() 
     {
         playerManager.SetEnergy(0);
     }
-    public void AddEnergy(float energyToAdd)
+    private protected void AddEnergy(float energyToAdd)
     {
         playerManager.SetEnergy(playerManager.Energy + energyToAdd);
     }
