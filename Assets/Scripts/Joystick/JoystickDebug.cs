@@ -3,30 +3,67 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-
+using UnityEngine.UI;
+public enum JoystickButtonsID
+{
+    Square = 0,
+    Cross = 1,
+    Circle = 2,
+    Triangle = 3,
+    L1 = 4,
+    R1 = 5,
+    L2 = 6,
+    R2 = 7,
+    Share = 8,
+    Options = 9,
+    L3 = 10,
+    R3 = 11,
+    PS = 12,
+    Pad = 13,
+    Left = 14,
+    Right = 15,
+    Up = 16,
+    Down = 17
+}
 public struct JoystickButtons
 {
-    public static string Square = "Square";
-    public static string Cross = "Cross";
-    public static string Circle = "Circle";
-    public static string Triangle = "Triangle";
-    public static string L1 = "L1";
-    public static string R1 = "R1";
-    public static string L2 = "L2";
-    public static string R2 = "R2";
-    public static string Share = "Share";
-    public static string Options = "Options";
-    public static string L3 = "L3";
-    public static string R3 = "R3";
-    public static string PS = "PS";
-    public static string Pad = "Pad";
+    public const string Square = "Square";
+    public const string Cross = "Cross";
+    public const string Circle = "Circle";
+    public const string Triangle = "Triangle";
+    public const string L1 = "L1";
+    public const string R1 = "R1";
+    public const string L2 = "L2";
+    public const string R2 = "R2";
+    public const string Share = "Share";
+    public const string Options = "Options";
+    public const string L3 = "L3";
+    public const string R3 = "R3";
+    public const string PS = "PS";
+    public const string Pad = "Pad";
+    public const string LeftRight = "LeftRight";
+    public const string UpDown = "Up";
 }
 
 
 public class JoystickDebug : MonoBehaviour
 {
     [SerializeField] private Byte m_playerNumber; //Numero del jugador
+    private bool
+        m_squarePressed, m_crossPressed, m_circlePressed, m_trianglePressed,
+        m_l1Pressed, m_r1Pressed, m_l2Pressed, m_r2Pressed,
+        m_sharePressed, m_optionsPressed,
+        m_l3Pressed, m_r3Pressed,
+        m_psPressed, m_padPressed,
+        m_leftPressed, m_rightPressed, m_upPressed, m_downPressed;
+
+    private float
+        m_l3xAxis, m_l3yAxis,
+        m_l2Axis, m_r2Axis,
+        m_lefRightAxis, m_upDownAxis;
+
 
     [SerializeField] private GameObject[] m_buttons; //Botones del joystick
     //0 = Square
@@ -56,7 +93,7 @@ public class JoystickDebug : MonoBehaviour
 
     void Start()
     {
-        DebugJoysticksInGame();
+        DebugJoysticksActiveInGame();
         SetAnalogsInitialPosition();
     }
 
@@ -66,29 +103,24 @@ public class JoystickDebug : MonoBehaviour
 
     private void Update()
     {
-        GetJoystickSquareButtonInfo();
-        GetJoystickCrossButtonInfo();
-        GetJoystickCircleButtonInfo();
-        GetJoystickTriangleButtonInfo();
-        GetJoystickL1ButtonInfo();
-        GetJoystickR1ButtonInfo();
-        GetJoystickL2ButtonInfo();
-        GetJoystickR2ButtonInfo();
-        GetJoystickShareButtonInfo();
-        GetJoystickOptionsButtonInfo();
-        GetJoystickL3ButtonInfo();
-        GetJoystickR3ButtonInfo();
-        GetJoystickPSButtonInfo();
-        GetJoystickPadButtonInfo();
-
-
-
-
+        m_squarePressed = GetJoystickButtonInfo(JoystickButtons.Square, (int)JoystickButtonsID.Square);
+        m_crossPressed = GetJoystickButtonInfo(JoystickButtons.Cross, (int)JoystickButtonsID.Cross);
+        m_circlePressed = GetJoystickButtonInfo(JoystickButtons.Circle, (int)JoystickButtonsID.Circle);
+        m_trianglePressed = GetJoystickButtonInfo(JoystickButtons.Triangle, (int)JoystickButtonsID.Triangle);
+        m_l1Pressed = GetJoystickButtonInfo(JoystickButtons.L1, (int)JoystickButtonsID.L1);
+        m_r1Pressed = GetJoystickButtonInfo(JoystickButtons.R1, (int)JoystickButtonsID.R1);
+        m_l2Pressed = GetJoystickButtonInfo(JoystickButtons.L2, (int)JoystickButtonsID.L2);
+        m_r2Pressed = GetJoystickButtonInfo(JoystickButtons.R2, (int)JoystickButtonsID.R2);
+        m_sharePressed = GetJoystickButtonInfo(JoystickButtons.Share, (int)JoystickButtonsID.Share);
+        m_optionsPressed = GetJoystickButtonInfo(JoystickButtons.Options, (int)JoystickButtonsID.Options);
+        m_l3Pressed = GetJoystickButtonInfo(JoystickButtons.L3, (int)JoystickButtonsID.L3);
+        m_r3Pressed = GetJoystickButtonInfo(JoystickButtons.R3, (int)JoystickButtonsID.R3);
+        m_psPressed = GetJoystickButtonInfo(JoystickButtons.PS, (int)JoystickButtonsID.PS);
+        m_padPressed = GetJoystickButtonInfo(JoystickButtons.Pad, (int)JoystickButtonsID.Pad);
     }
-
     //-----------------//
 
-    private void DebugJoysticksInGame()
+    private void DebugJoysticksActiveInGame()
     {
         string[] joystickNames = Input.GetJoystickNames();
 
@@ -103,89 +135,45 @@ public class JoystickDebug : MonoBehaviour
         m_R3initialPos = m_buttons[11].transform.position;
     }
 
-    private void GetJoystickSquareButtonInfo()
+    //-----------------//
+    private bool GetJoystickButtonInfo(string buttonName, int buttomID)
     {
-        if (Input.GetButton(JoystickButtons.Square + "P" + m_playerNumber))
-            m_buttons[0].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[0].GetComponent<SpriteRenderer>().enabled = false;
-    }
+        bool pressed = Input.GetButton(buttonName + "P" + m_playerNumber);
 
-    private void GetJoystickCrossButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.Cross + "P" + m_playerNumber))
-            m_buttons[1].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[1].GetComponent<SpriteRenderer>().enabled = false;
+        DebugJoystickButton(pressed, buttomID);
+            
+        return pressed;
     }
+    private void DebugJoystickButton(bool pressedValue, int buttonID)
+    {
+        if (pressedValue)
+            m_buttons[buttonID].GetComponent<SpriteRenderer>().enabled = true;
+        else
+            m_buttons[buttonID].GetComponent<SpriteRenderer>().enabled = false;
+    }
+    private float GetJoystickAxisInfo(string buttonName, int buttonID, string axisXorY = "")
+    {
+        float axis = 0;
+        if (axisXorY != "")
+            axis = Input.GetAxis(buttonName + axisXorY.ToLower() + "P" + m_playerNumber);
+        else
+            axis = Input.GetAxis(buttonName + "P" + m_playerNumber);
 
-    private void GetJoystickCircleButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.Circle + "P" + m_playerNumber))
-            m_buttons[2].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[2].GetComponent<SpriteRenderer>().enabled = false;
+        DebugJoystickAxis(0f);
+        return axis;
     }
-    private void GetJoystickTriangleButtonInfo()
+    private void DebugJoystickAxis(float axisValue)
     {
-        if (Input.GetButton(JoystickButtons.Triangle + "P" + m_playerNumber))
-            m_buttons[3].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[3].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickL1ButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.L1 + "P" + m_playerNumber))
-            m_buttons[4].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[4].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickR1ButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.R1 + "P" + m_playerNumber))
-            m_buttons[5].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[5].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickL2ButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.L2 + "P" + m_playerNumber))
-            m_buttons[6].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[6].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickR2ButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.R2 + "P" + m_playerNumber))
-            m_buttons[7].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[7].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickShareButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.Share + "P" + m_playerNumber))
-            m_buttons[8].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[8].GetComponent<SpriteRenderer>().enabled = false;
-    }
-    private void GetJoystickOptionsButtonInfo()
-    {
-        if (Input.GetButton(JoystickButtons.Options + "P" + m_playerNumber))
-            m_buttons[9].GetComponent<SpriteRenderer>().enabled = true;
-        else
-            m_buttons[9].GetComponent<SpriteRenderer>().enabled = false;
+
     }
     private void GetJoystickL3ButtonInfo()
     {
-        bool pressed;
-        float xInput;
-        float yInput;
-
-        xInput = Input.GetAxis(JoystickButtons.L3 + "xP" + m_playerNumber);
-        yInput = Input.GetAxis(JoystickButtons.L3 + "yP" + m_playerNumber);
-        pressed = Input.GetButton(JoystickButtons.L3 + "P" + m_playerNumber);
+        bool pressed = Input.GetButton(JoystickButtons.L3 + "P" + m_playerNumber);
+        float xInput = Input.GetAxis(JoystickButtons.L3 + "xP" + m_playerNumber);
+        float yInput = Input.GetAxis(JoystickButtons.L3 + "yP" + m_playerNumber);
 
         DebugJoystickL3Movement(pressed, xInput, yInput);
+        DebugJoystickL3Axis(xInput, yInput);
     }
     private void DebugJoystickL3Movement(bool pressed, float x, float y)
     {
@@ -198,6 +186,18 @@ public class JoystickDebug : MonoBehaviour
             m_buttons[10].GetComponent<SpriteRenderer>().enabled = true;
         else
             m_buttons[10].GetComponent<SpriteRenderer>().enabled = false;
+    }
+    private void DebugJoystickL3Axis(float x, float y)
+    {
+        /*if (x < 0f) //si x es positivo
+            m_mask[0].fillAmount = MathF.Abs(x);
+        else if (x > 0) // si x es negativo
+            m_mask[1].fillAmount = MathF.Abs(x);
+        else
+        {
+            m_mask[0].fillAmount = MathF.Abs(x);
+            m_mask[1].fillAmount = MathF.Abs(x);
+        }*/
     }
     private void GetJoystickR3ButtonInfo()
     {
