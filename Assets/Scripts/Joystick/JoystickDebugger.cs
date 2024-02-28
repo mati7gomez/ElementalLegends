@@ -38,6 +38,11 @@ public class JoystickDebugger : MonoBehaviour
     //8 = Up
     //9 = Down
 
+    private struct JoystickButtonsObj
+    {
+        GameObject Square;
+        GameObject Cross;
+    }
     private Vector2 m_L3initialPos; //Posicion inicial del boton L3 del joystick
     private Vector2 m_R3initialPos; //Posicion inicial del boton R3 del joystick
 
@@ -49,9 +54,26 @@ public class JoystickDebugger : MonoBehaviour
     }
     private void Update()
     {
-        DebugJoystickButton(JoystickButtons.Square);
-        DebugJoystickButton(JoystickButtons.Left);
-        DebugJoystickButton(JoystickButtons.L3);
+        DebugJoystickButton(JoystickButtons.Square, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Cross, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Circle, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Triangle, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.L1, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.R1, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.L2, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.R2, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Share, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Options, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.L3, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.R3, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.PS, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Pad, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Left, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Right, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Up, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.Down, m_playerNumber);
+
+
     }
 
     //-----------------//
@@ -64,20 +86,29 @@ public class JoystickDebugger : MonoBehaviour
 
     //-----------------//
 
-    private void DebugJoystickButton(string buttonName)
+    private void DebugJoystickButton(string buttonName, int playerNumber)
     {
-        bool hasAxis = GetJoystickButtonHasAxis(buttonName);
-
-        if (hasAxis)
+        if (GetJoystickButtonHasAxis(buttonName))
         {
-            if (buttonName == JoystickButtons.L3 || buttonName == JoystickButtons.R3)
+            if (GetJoystickButtonIsAnalog(buttonName))
             {
-                DebugJoystickAnalogs(buttonName);
+                bool buttonPressed = JoystickManager.GetJoystickButton(buttonName, playerNumber);
+                int buttonID = GetJoystickButtonID(buttonName);
+                int axisID = GetJoystickAxisID(buttonName);
+                float xAxis = JoystickManager.GetJoystickAxis(buttonName, playerNumber, 'x');
+                float yAxis = JoystickManager.GetJoystickAxis(buttonName, playerNumber, 'y');
+                DebugJoystickAnalogs(buttonPressed, buttonID, xAxis, yAxis);
+                DebugJoystickAxis(xAxis, 'x', axisID);
+                DebugJoystickAxis(yAxis, 'y', axisID + 1);
             }
-            else if (buttonName == JoystickButtons.L2 || buttonName == JoystickButtons.R2)
+            else if (GetJoystickButtonIsTrigger(buttonName))
             {
-                bool pressed = JoystickManager.GetJoystickButton(buttonName);
-                float axisValue = JoystickManager.GetJoystickAxis(buttonName, 'x');
+                bool buttonPressed = JoystickManager.GetJoystickButton(buttonName, playerNumber);
+                int buttonID = GetJoystickButtonID(buttonName);
+                int axisID = GetJoystickAxisID(buttonName);
+                float xAxis = JoystickManager.GetJoystickAxis(buttonName, playerNumber, 'x');
+                DebugJoystickButtonOnly(buttonPressed, buttonID);
+                DebugJoystickAxis(xAxis, 'x', axisID);
             }
             else
             {
@@ -86,41 +117,59 @@ public class JoystickDebugger : MonoBehaviour
         }
         else
         {
-            int ID = GetJoystickButtonID(buttonName);
-            bool pressed = JoystickManager.GetJoystickButton(buttonName);
-            DebugJoystickButtonOnly(pressed, ID);
+            int buttonID = GetJoystickButtonID(buttonName);
+            bool buttonPressed = JoystickManager.GetJoystickButton(buttonName, playerNumber);
+            DebugJoystickButtonOnly(buttonPressed, buttonID);
         }
     }
     private void DebugJoystickButtonOnly(bool buttonPressed, int buttonID)
     {
         if (buttonPressed)
-            m_buttons[buttonID].GetComponent<SpriteRenderer>().enabled = true;
+            ChangeButtonRenderState(buttonID, true);
         else
-            m_buttons[buttonID].GetComponent<SpriteRenderer>().enabled = false;
+            ChangeButtonRenderState(buttonID, false);
     }
-    private void DebugJoystickAnalogs(string buttonName)
+    private void DebugJoystickAnalogs(bool buttonPressed, int buttonID, float xAxis, float yAxis)
     {
-        int ID = GetJoystickButtonID(buttonName);
-        bool buttonPressed = JoystickManager.GetJoystickButton(buttonName);
-        float xAxis = JoystickManager.GetJoystickAxis(buttonName, 'x');
-        float yAxis = JoystickManager.GetJoystickAxis(buttonName, 'y');
-        HandleAnalogsMovement(xAxis, yAxis, ID);
+        HandleAnalogsMovement(xAxis, yAxis, buttonID);
 
         if (xAxis != 0 || yAxis != 0 || buttonPressed)
-            m_buttons[ID].GetComponent<SpriteRenderer>().enabled = true;
+            ChangeButtonRenderState(buttonID, true);
         else
-            m_buttons[ID].GetComponent<SpriteRenderer>().enabled = false;
+            ChangeButtonRenderState(buttonID, false);
     }
-    private void HandleAnalogsMovement(float x, float y, int buttonID)
+    private void HandleAnalogsMovement(float xAxis, float yAxis, int buttonID)
     {
-        Vector2 joystickDir = new Vector2(x, y);
+        Vector2 joystickDir = new Vector2(xAxis, yAxis);
 
         Debug.DrawRay(m_buttons[buttonID].transform.position, joystickDir);
-        m_buttons[buttonID].transform.position = m_L3initialPos + (joystickDir / 2);
-    }
-    private void DebugJoystickAxis(float axisValue, int buttonID)
-    {
+        if (buttonID == (int)JoystickButtonsID.L3)
+            m_buttons[buttonID].transform.position = m_L3initialPos + (joystickDir / 2);
+        else if (buttonID == (int)JoystickButtonsID.R3)
+            m_buttons[buttonID].transform.position = m_R3initialPos + (joystickDir / 2);
 
+    }
+    private void DebugJoystickArrows(int axisValue, int buttonID)
+    {
+        //if (axisValue !=)
+    }
+    private void DebugJoystickAxis(float axisValue, char axis, int axisID)
+    {
+        if (axisValue != 0)
+            ChangeAxisRenderValue(axisID, axisValue, axis);
+        else
+            ChangeAxisRenderValue(axisID, axisValue, axis);
+    }
+    private void ChangeAxisRenderValue(int axisID, float axisValue, char axis)
+    {
+        if (axis == 'x')
+            m_axis[axisID].transform.localScale = new Vector2(axisValue, 1);
+        else if (axis == 'y')
+            m_axis[axisID].transform.localScale = new Vector2(1, axisValue);
+    }
+    private void ChangeButtonRenderState(int buttonID, bool value)
+    {
+        m_buttons[buttonID].GetComponent<SpriteRenderer>().enabled = value;
     }
 
 
@@ -167,14 +216,42 @@ public class JoystickDebugger : MonoBehaviour
         }
         return buttonID;
     }
+    private int GetJoystickAxisID(string buttonName)
+    {
+        switch (buttonName)
+        {
+            case JoystickButtons.L3:
+                return 0;
+            case JoystickButtons.R3:
+                return 2;
+            case JoystickButtons.L2:
+                return 4;
+            case JoystickButtons.R2:
+                return 5;
+
+        }
+        return 1;
+    }
     private bool GetJoystickButtonHasAxis(string buttonName)
     {
-        int buttonID = GetJoystickButtonID(buttonName);
-
-        if (   buttonID == (int)JoystickButtonsID.L2 || buttonID == (int)JoystickButtonsID.R2
-            || buttonID == (int)JoystickButtonsID.L3 || buttonID == (int)JoystickButtonsID.R3
-            || buttonID == (int)JoystickButtonsID.Left || buttonID == (int)JoystickButtonsID.Right
-            || buttonID == (int)JoystickButtonsID.Up || buttonID == (int)JoystickButtonsID.Down)
+        if (   buttonName == JoystickButtons.L2 || buttonName == JoystickButtons.R2
+            || buttonName == JoystickButtons.L3 || buttonName == JoystickButtons.R3
+            || buttonName == JoystickButtons.Left || buttonName == JoystickButtons.Right
+            || buttonName == JoystickButtons.Up || buttonName == JoystickButtons.Down)
+            return true;
+        else 
+            return false;
+    }
+    private bool GetJoystickButtonIsAnalog(string buttonName)
+    {
+        if (buttonName == JoystickButtons.L3 || buttonName == JoystickButtons.R3)
+            return true;
+        else
+            return false;
+    }
+    private bool GetJoystickButtonIsTrigger(string buttonName)
+    {
+        if (buttonName == JoystickButtons.L2 || buttonName == JoystickButtons.R2)
             return true;
         else 
             return false;
