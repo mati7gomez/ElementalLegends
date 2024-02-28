@@ -1,11 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Unity.VisualScripting;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.UI;
 public enum JoystickButtonsID
 {
     Square = 0,
@@ -43,9 +37,9 @@ public struct JoystickButtons
     public const string R3 = "R3";
     public const string PS = "PS";
     public const string Pad = "Pad";
-    public const string Left = "LeftRight";
+    public const string LeftRight = "LeftRight";
     public const string Right = "LeftRight";
-    public const string Up = "UpDown";
+    public const string UpDown = "UpDown";
     public const string Down = "UpDown";
 }
 

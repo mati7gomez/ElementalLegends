@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class JoystickDebugger : MonoBehaviour
@@ -22,9 +23,9 @@ public class JoystickDebugger : MonoBehaviour
     //11 = R3
     //12 = PS
     //13 = pad
-    //14 = Left
+    //14 = LeftRight
     //15 = Right
-    //16 = Up
+    //16 = UpDown
     //17 = Down
     [SerializeField] private GameObject[] m_axis;
     //0 = L3x
@@ -33,9 +34,9 @@ public class JoystickDebugger : MonoBehaviour
     //3 = R3y
     //4 = L2
     //5 = R2
-    //6 = Left
+    //6 = LeftRight
     //7 = Right
-    //8 = Up
+    //8 = UpDown
     //9 = Down
 
     private struct JoystickButtonsObj
@@ -68,10 +69,8 @@ public class JoystickDebugger : MonoBehaviour
         DebugJoystickButton(JoystickButtons.R3, m_playerNumber);
         DebugJoystickButton(JoystickButtons.PS, m_playerNumber);
         DebugJoystickButton(JoystickButtons.Pad, m_playerNumber);
-        DebugJoystickButton(JoystickButtons.Left, m_playerNumber);
-        DebugJoystickButton(JoystickButtons.Right, m_playerNumber);
-        DebugJoystickButton(JoystickButtons.Up, m_playerNumber);
-        DebugJoystickButton(JoystickButtons.Down, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.LeftRight, m_playerNumber);
+        DebugJoystickButton(JoystickButtons.UpDown, m_playerNumber);
 
 
     }
@@ -108,11 +107,13 @@ public class JoystickDebugger : MonoBehaviour
                 int axisID = GetJoystickAxisID(buttonName);
                 float xAxis = JoystickManager.GetJoystickAxis(buttonName, playerNumber, 'x');
                 DebugJoystickButtonOnly(buttonPressed, buttonID);
-                DebugJoystickAxis(xAxis, 'x', axisID);
+                DebugJoystickAxis((xAxis + 1) / 2, 'x', axisID);
             }
             else
             {
-
+                int xAxis = Convert.ToInt32(JoystickManager.GetJoystickAxis(buttonName, playerNumber));
+                int buttonID = GetJoystickButtonID(buttonName);
+                DebugJoystickArrows(xAxis, buttonID);
             }
         }
         else
@@ -151,7 +152,40 @@ public class JoystickDebugger : MonoBehaviour
     }
     private void DebugJoystickArrows(int axisValue, int buttonID)
     {
-        //if (axisValue !=)
+        if (axisValue != 0)
+        {
+            if (buttonID == (int)JoystickButtonsID.Left)
+            {
+                if (axisValue > 0)
+                {
+                    ChangeButtonRenderState(buttonID + 1, true);
+                    ChangeButtonRenderState(buttonID, false);
+                }
+                else if (axisValue < 0)
+                {
+                    ChangeButtonRenderState(buttonID, true);
+                    ChangeButtonRenderState(buttonID + 1, false);
+                }
+            }
+            else if (buttonID == (int)JoystickButtonsID.Up)
+            {
+                if (axisValue > 0)
+                {
+                    ChangeButtonRenderState(buttonID, true);
+                    ChangeButtonRenderState(buttonID + 1, false);
+                }
+                else if (axisValue < 0)
+                {
+                    ChangeButtonRenderState(buttonID + 1, true);
+                    ChangeButtonRenderState(buttonID, false);
+                }
+            }
+        }
+        else
+        {
+            ChangeButtonRenderState(buttonID, false);
+            ChangeButtonRenderState(buttonID + 1, false);
+        }
     }
     private void DebugJoystickAxis(float axisValue, char axis, int axisID)
     {
@@ -236,8 +270,8 @@ public class JoystickDebugger : MonoBehaviour
     {
         if (   buttonName == JoystickButtons.L2 || buttonName == JoystickButtons.R2
             || buttonName == JoystickButtons.L3 || buttonName == JoystickButtons.R3
-            || buttonName == JoystickButtons.Left || buttonName == JoystickButtons.Right
-            || buttonName == JoystickButtons.Up || buttonName == JoystickButtons.Down)
+            || buttonName == JoystickButtons.LeftRight || buttonName == JoystickButtons.Right
+            || buttonName == JoystickButtons.UpDown || buttonName == JoystickButtons.Down)
             return true;
         else 
             return false;

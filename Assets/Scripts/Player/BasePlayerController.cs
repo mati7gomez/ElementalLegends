@@ -82,7 +82,7 @@ public class BasePlayerController : MonoBehaviour, IDamagable //Clase base de lo
     #region Horizontal movement
     private void PlayerHorizontalMovement() //Manejamos el movimiento horizontal del jugador
     {
-        m_xMovement = Input.GetAxis("L3xP" + playerManager.PlayerNumber); //Valor del input horizontal (Left Stick del joystick)
+        m_xMovement = Input.GetAxis("L3xP" + playerManager.PlayerNumber); //Valor del input horizontal (LeftRight Stick del joystick)
         
         if (!playerManager.IsBusy && !playerManager.IsFinishingAttack) //Si el jugador no esta realizando ninguna accion
         {
