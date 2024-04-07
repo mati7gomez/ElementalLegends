@@ -72,7 +72,7 @@ public class AttackCollidersHashashin : MonoBehaviour
                 }
                 else
                 {
-                    collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage * 1.5f, m_hitForce, m_hitForce);
+                    collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage + 5, m_hitForce, m_hitForce);
                     ResetUltimateCheck();
                 }
                     

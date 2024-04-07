@@ -7,6 +7,6 @@ public class SM_Death : StateMachineBehaviour
 {
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(1);
     }
 }

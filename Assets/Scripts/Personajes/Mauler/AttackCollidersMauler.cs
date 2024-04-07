@@ -24,7 +24,7 @@ public class AttackCollidersMauler : MonoBehaviour
                 m_hitForce = 0;
                 break;
             case 2:
-                m_damage = 10;
+                m_damage = 5;
                 m_hitForce = 7;
                 break;
             case 3:
@@ -82,7 +82,7 @@ public class AttackCollidersMauler : MonoBehaviour
     }
     private void HandleAttack(Collider2D collision, float forceX, float forceY)
     {
-        collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage * 5f, forceX, forceY);
+        collision.GetComponent<IDamagable>().ReceiveDamage(transform, m_damage, m_damage + 5, forceX, forceY);
     }
     private void ResetUltimateCheck()
     {
